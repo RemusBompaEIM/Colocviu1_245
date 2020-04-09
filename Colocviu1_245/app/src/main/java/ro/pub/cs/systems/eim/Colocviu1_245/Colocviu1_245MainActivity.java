@@ -1,10 +1,14 @@
 package ro.pub.cs.systems.eim.Colocviu1_245;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.provider.SyncStateContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,10 +25,16 @@ public class Colocviu1_245MainActivity extends AppCompatActivity {
     private static String last_text = "";
     private static AppCompatActivity main = null;
 
+    private String serviceStatus;
+    private static final String SERVICE_STARTED = "SERVICE_STARTED";
+
+    private IntentFilter intentFilter = new IntentFilter();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_practical_test01_245_main);
+        main = this;
 
         if (savedInstanceState != null) {
             if (savedInstanceState.containsKey(SUM))
@@ -38,7 +48,8 @@ public class Colocviu1_245MainActivity extends AppCompatActivity {
         addB.setOnClickListener(new AddButtonClickListener());
         Button computeB = (Button)findViewById(R.id.compute);
         computeB.setOnClickListener(new AddButtonClickListener());
-        main = this;
+        intentFilter.addAction("action_type");
+
     }
 
      class AddButtonClickListener implements View.OnClickListener {
@@ -56,11 +67,21 @@ public class Colocviu1_245MainActivity extends AppCompatActivity {
                     String ints = ((TextView)findViewById(R.id.all_terms)).getText().toString();
                     if(ints.equals(last_text))
                         Toast.makeText(main, "The activity returned " + suma, Toast.LENGTH_LONG).show();
-                    Intent intent = new Intent(getApplicationContext(), Colocviu1_245SecondaryActivity.class);
-                    intent.putExtra(Colocviu1_245SecondaryActivity.ALL_TERMS_KEY, ints);
-                    startActivityForResult(intent, SECONDARY_ACTIVITY_REQUEST_CODE);
+                    else {
+                        Intent intent = new Intent(getApplicationContext(), Colocviu1_245SecondaryActivity.class);
+                        intent.putExtra(Colocviu1_245SecondaryActivity.ALL_TERMS_KEY, ints);
+                        startActivityForResult(intent, SECONDARY_ACTIVITY_REQUEST_CODE);
+                    }
                     break;
             }
+        }
+    }
+
+    private MessageBroadcastReceiver messageBroadcastReceiver = new MessageBroadcastReceiver();
+    private class MessageBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("Broadcast", intent.getStringExtra("Broadcast"));
         }
     }
 
@@ -70,6 +91,12 @@ public class Colocviu1_245MainActivity extends AppCompatActivity {
             if (resultCode == Activity.RESULT_OK) {
                 suma = intent.getStringExtra(Colocviu1_245SecondaryActivity.RESULT_KEY);
                 Toast.makeText(this, "The activity returned " + suma, Toast.LENGTH_LONG).show();
+                if(Integer.parseInt(suma) > 10){
+                    Intent serv_intent = new Intent(getApplicationContext(), Colocviu245_Service.class);
+                    serv_intent.putExtra(SUM, suma);
+                    getApplicationContext().startService(intent);
+                    serviceStatus = SERVICE_STARTED;
+                }
             }
 
         }
@@ -80,5 +107,24 @@ public class Colocviu1_245MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(savedInstanceState);
         savedInstanceState.putString(SUM, suma);
         savedInstanceState.putString(LAST_TEXT, last_text);
+    }
+
+    @Override
+    protected void onDestroy() {
+        Intent intent = new Intent(this, Colocviu245_Service.class);
+        stopService(intent);
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(messageBroadcastReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(messageBroadcastReceiver);
+        super.onPause();
     }
 }
