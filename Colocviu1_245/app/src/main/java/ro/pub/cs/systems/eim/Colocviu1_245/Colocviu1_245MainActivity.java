@@ -56,9 +56,11 @@ public class Colocviu1_245MainActivity extends AppCompatActivity {
                     String ints = ((TextView)findViewById(R.id.all_terms)).getText().toString();
                     if(ints.equals(last_text))
                         Toast.makeText(main, "The activity returned " + suma, Toast.LENGTH_LONG).show();
-                    Intent intent = new Intent(getApplicationContext(), Colocviu1_245SecondaryActivity.class);
-                    intent.putExtra(Colocviu1_245SecondaryActivity.ALL_TERMS_KEY, ints);
-                    startActivityForResult(intent, SECONDARY_ACTIVITY_REQUEST_CODE);
+                    else{
+                        Intent intent = new Intent(getApplicationContext(), Colocviu1_245SecondaryActivity.class);
+                        intent.putExtra(Colocviu1_245SecondaryActivity.ALL_TERMS_KEY, ints);
+                        startActivityForResult(intent, SECONDARY_ACTIVITY_REQUEST_CODE);
+                    }
                     break;
             }
         }
